@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BLOOMBERG TERMINAL</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+<script src="https://cdn.amcharts.com/lib/5/map.js"></script>
+<script src="https://cdn.amcharts.com/lib/5/geodata/worldLow.js"></script>
+<script src="https://cdn.amcharts.com/lib/5/themes/Dark.js"></script>
+<style>
+  :root {
+    --bg:        #000000;
+    --bg2:       #060606;
+    --bg3:       #0c0c0c;
+    --border:    #1c2e1c;
+    --border2:   #2a2a2a;
+    --orange:    #ff6200;
+    --orange2:   #ff8c00;
+    --green:     #00e676;
+    --green2:    #00ff41;
+    --red:       #ff1744;
+    --red2:      #ff5252;
+    --white:     #e8e8e8;
+    --dim:       #666;
+    --blue:      #29b6f6;
+    --yellow:    #ffd600;
+    --panel-hdr: #0a1a0a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--white);
+    font-family: 'IBM Plex Mono', 'Courier New', monospace;
+    font-size: 11px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Header ───────────────────────────────────────────────────────── */
+  #header {
+    background: var(--bg2);
+    border-bottom: 2px solid var(--orange);
+    padding: 6px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  #logo {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--orange);
+    letter-spacing: 3px;
+    white-space: nowrap;
+    text-shadow: 0 0 12px rgba(255,98,0,0.5);
+  }
+
+  #logo span { color: var(--white); font-weight: 300; }
+
+  #clocks {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .clock-item {
+    text-align: center;
+    border: 1px solid var(--border2);
+    padding: 2px 8px;
+    background: var(--bg3);
+  }
+
+  .clock-city {
+    color: var(--orange2);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 1px;
+  }
+
+  .clock-time {
+    color: var(--white);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 2px;
+  }
+
+  .clock-status {
+    font-size: 8px;
+    font-weight: 600;
+    letter-spacing: 1px;
+  }
+
+  .status-open  { color: var(--green); }
+  .status-closed { color: var(--red); }
+
+  #last-update {
+    color: var(--dim);
+    font-size: 9px;
+    white-space: nowrap;
+    text-align: right;
+  }
+
+  #last-update span { color: var(--orange2); }
+
+  /* ── Ticker tape ──────────────────────────────────────────────────── */
+  #ticker-wrap {
+    background: #050505;
+    border-bottom: 2px solid var(--border);
+    overflow: hidden;
+    height: 44px;
+    position: relative;
+  }
+
+  #ticker {
+    display: flex;
+    align-items: stretch;
+    position: absolute;
+    white-space: nowrap;
+    height: 100%;
+    animation: scroll-left 80s linear infinite;
+  }
+
+  #ticker:hover { animation-play-state: paused; }
+
+  @keyframes scroll-left {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  .tick-item {
+    display: inline-flex;
+    align-items: stretch;
+    border-right: 1px solid #161616;
+    min-width: 130px;
+    cursor: default;
+    transition: background 0.15s;
+  }
+
+  .tick-item:hover { background: #0e0e0e; }
+
+  .tick-accent {
+    width: 3px;
+    flex-shrink: 0;
+    /* color set inline per item */
+  }
+
+  .tick-body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 4px 10px 4px 8px;
+    gap: 2px;
+  }
+
+  .tick-name {
+    color: var(--orange2);
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+  }
+
+  .tick-price {
+    color: var(--white);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    line-height: 1;
+  }
+
+  .tick-pct {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+
+  /* ── Main grid ────────────────────────────────────────────────────── */
+  #main {
+    display: grid;
+    grid-template-columns: 160px 160px 150px 150px 170px 1fr;
+    grid-template-rows: auto auto auto;
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    margin: 1px;
+  }
+
+  /* ── Generic panel ────────────────────────────────────────────────── */
+  .panel {
+    background: var(--bg2);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .panel-hdr {
+    background: var(--panel-hdr);
+    border-bottom: 1px solid var(--orange);
+    padding: 3px 7px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .panel-title {
+    color: var(--orange);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .panel-sub {
+    color: var(--dim);
+    font-size: 8px;
+  }
+
+  .panel-body { padding: 4px 0; flex: 1; overflow-y: auto; }
+
+  /* ── Market rows ──────────────────────────────────────────────────── */
+  .mkt-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 6px;
+    padding: 5px 8px 4px;
+    border-bottom: 1px solid #111;
+    transition: background 0.15s;
+  }
+
+  .mkt-row:hover { background: #0f1f0f; cursor: default; }
+
+  .mkt-name {
+    flex: 0 0 100%;        /* always full width = own line */
+    color: var(--orange2);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+    white-space: nowrap;
+  }
+
+  .mkt-price {
+    flex: 1;
+    color: var(--white);
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .mkt-chg {
+    font-size: 9px;
+    font-weight: 600;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .pos { color: var(--green); }
+  .neg { color: var(--red); }
+  .neu { color: var(--dim); }
+
+  /* ── News panel ───────────────────────────────────────────────────── */
+  #news-panel {
+    grid-column: 6;
+    grid-row: 1 / 3;
+  }
+
+  .news-item {
+    border-bottom: 1px solid #111;
+    padding: 5px 8px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .news-item:hover { background: #0a160a; }
+
+  .news-source {
+    color: var(--orange2);
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin-bottom: 1px;
+  }
+
+  .news-title {
+    color: var(--white);
+    font-size: 10px;
+    line-height: 1.4;
+  }
+
+  .news-time {
+    color: var(--dim);
+    font-size: 8px;
+    margin-top: 2px;
+  }
+
+  /* ── Bottom row ───────────────────────────────────────────────────── */
+  #global-panel {
+    grid-column: 1 / 6;
+    grid-row: 2;
+  }
+
+  #global-panel .panel-body {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1px;
+    padding: 4px;
+  }
+
+  .stock-card {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    padding: 5px 10px;
+    min-width: 110px;
+    flex: 1;
+    transition: border-color 0.2s;
+  }
+
+  .stock-card:hover { border-color: var(--orange); }
+
+  .sc-name {
+    color: var(--orange2);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1px;
+  }
+
+  .sc-ticker {
+    color: var(--dim);
+    font-size: 8px;
+  }
+
+  .sc-price {
+    color: var(--white);
+    font-size: 13px;
+    font-weight: 600;
+    margin-top: 2px;
+  }
+
+  .sc-chg {
+    font-size: 9px;
+    font-weight: 600;
+    margin-top: 1px;
+  }
+
+  /* ── Third row ────────────────────────────────────────────────────── */
+  #no-panel {
+    grid-column: 1 / 4;
+    grid-row: 3;
+  }
+
+  #no-panel .panel-body {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1px;
+    padding: 4px;
+  }
+
+  #earnings-panel {
+    grid-column: 4 / 6;
+    grid-row: 3;
+  }
+
+  .earn-row {
+    display: grid;
+    grid-template-columns: 70px 1fr auto;
+    gap: 6px;
+    align-items: center;
+    padding: 4px 8px;
+    border-bottom: 1px solid #111;
+  }
+
+  .earn-sym { color: var(--orange); font-weight: 600; font-size: 11px; }
+  .earn-date { color: var(--white); font-size: 10px; }
+  .earn-days { color: var(--yellow); font-size: 9px; }
+
+  #alerts-panel {
+    grid-column: 6;
+    grid-row: 3;
+  }
+
+  .alert-item {
+    display: flex;
+    gap: 7px;
+    align-items: flex-start;
+    padding: 5px 8px;
+    border-bottom: 1px solid #111;
+  }
+
+  .alert-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-top: 3px;
+    flex-shrink: 0;
+  }
+
+  .alert-dot.red    { background: var(--red); box-shadow: 0 0 4px var(--red); }
+  .alert-dot.yellow { background: var(--yellow); box-shadow: 0 0 4px var(--yellow); }
+  .alert-dot.green  { background: var(--green); box-shadow: 0 0 4px var(--green); }
+  .alert-dot.blue   { background: var(--blue); box-shadow: 0 0 4px var(--blue); }
+
+  .alert-text { color: var(--white); font-size: 10px; line-height: 1.4; }
+  .alert-cat  { color: var(--dim); font-size: 8px; margin-top: 1px; letter-spacing: 1px; }
+
+  /* ── Footer ───────────────────────────────────────────────────────── */
+  #footer {
+    background: var(--panel-hdr);
+    border-top: 1px solid var(--orange);
+    padding: 3px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 9px;
+    color: var(--dim);
+  }
+
+  #footer .key { color: var(--orange); font-weight: 600; }
+
+  /* ── Loading overlay ──────────────────────────────────────────────── */
+  #loading {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    gap: 16px;
+  }
+
+  #loading h1 {
+    color: var(--orange);
+    font-size: 28px;
+    letter-spacing: 6px;
+    text-shadow: 0 0 20px rgba(255,98,0,0.6);
+  }
+
+  #loading p { color: var(--dim); font-size: 11px; letter-spacing: 2px; }
+
+  .spinner {
+    width: 32px; height: 32px;
+    border: 3px solid #1a1a1a;
+    border-top-color: var(--orange);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Scrollbar styling ────────────────────────────────────────────── */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: #000; }
+  ::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--orange); }
+
+  /* ── Flash animation on data update ──────────────────────────────── */
+  @keyframes flash-green { from { background: rgba(0,230,118,0.25); } to { background: transparent; } }
+  @keyframes flash-red   { from { background: rgba(255,23,68,0.25);  } to { background: transparent; } }
+  .flash-g { animation: flash-green 0.8s ease-out; }
+  .flash-r { animation: flash-red   0.8s ease-out; }
+
+  /* ── Exchange map section ─────────────────────────────────────────── */
+  #map-section {
+    margin: 1px;
+    margin-top: 1px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+  }
+
+  #map-section .panel-hdr {
+    border-bottom: 1px solid var(--orange);
+  }
+
+  #map-inner {
+    display: grid;
+    grid-template-columns: 1fr 260px;
+    height: 240px;
+  }
+
+  #chartdiv {
+    width: 100%;
+    height: 100%;
+    background: #020802;
+  }
+
+  #exchange-legend {
+    border-left: 1px solid var(--border);
+    overflow-y: auto;
+    padding: 6px 0;
+    background: #030903;
+  }
+
+  .exch-row {
+    display: grid;
+    grid-template-columns: 10px 1fr auto;
+    align-items: center;
+    gap: 7px;
+    padding: 4px 10px;
+    border-bottom: 1px solid #0f0f0f;
+    transition: background 0.12s;
+  }
+
+  .exch-row:hover { background: #0c180c; }
+
+  .exch-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .exch-dot.open   { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .exch-dot.closed { background: #333; }
+  .exch-dot.pre    { background: var(--yellow); box-shadow: 0 0 4px var(--yellow); }
+
+  .exch-name { color: var(--white); font-size: 9px; }
+  .exch-time { color: var(--dim); font-size: 8px; white-space: nowrap; }
+
+  .exch-status-open   { color: var(--green); font-size: 8px; font-weight: 700; }
+  .exch-status-closed { color: #333; font-size: 8px; }
+  .exch-status-pre    { color: var(--yellow); font-size: 8px; font-weight: 700; }
+
+  /* Responsive adjustments */
+  @media (max-width: 1200px) {
+    #main { grid-template-columns: 145px 145px 135px 135px 155px 1fr; font-size: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Loading overlay -->
+<div id="loading">
+  <h1>BLOOMBERG TERMINAL</h1>
+  <div class="spinner"></div>
+  <p>LASTER MARKEDSDATA …</p>
+</div>
+
+<!-- Header -->
+<div id="header">
+  <div id="logo">BLOOMBERG<span> TERMINAL</span></div>
+  <div id="clocks">
+    <div class="clock-item">
+      <div class="clock-city">OSLO</div>
+      <div class="clock-time" id="tz-oslo">--:--:--</div>
+      <div class="clock-status" id="st-oslo">-</div>
+    </div>
+    <div class="clock-item">
+      <div class="clock-city">NEW YORK</div>
+      <div class="clock-time" id="tz-ny">--:--:--</div>
+      <div class="clock-status" id="st-ny">-</div>
+    </div>
+    <div class="clock-item">
+      <div class="clock-city">LONDON</div>
+      <div class="clock-time" id="tz-lon">--:--:--</div>
+      <div class="clock-status" id="st-lon">-</div>
+    </div>
+    <div class="clock-item">
+      <div class="clock-city">TOKYO</div>
+      <div class="clock-time" id="tz-tok">--:--:--</div>
+      <div class="clock-status" id="st-tok">-</div>
+    </div>
+    <div class="clock-item">
+      <div class="clock-city">HONG KONG</div>
+      <div class="clock-time" id="tz-hk">--:--:--</div>
+      <div class="clock-status" id="st-hk">-</div>
+    </div>
+  </div>
+  <div id="last-update">
+    DATA HENTET: <span id="update-time">–</span><br>
+    NESTE OPPDATERING: <span id="next-update">–</span>
+  </div>
+</div>
+
+<!-- Ticker tape -->
+<div id="ticker-wrap">
+  <div id="ticker"></div>
+</div>
+
+<!-- Main grid -->
+<div id="main">
+
+  <!-- Indices -->
+  <div class="panel" id="p-indices">
+    <div class="panel-hdr">
+      <span class="panel-title">INDEKSER</span>
+      <span class="panel-sub">GLOBALT</span>
+    </div>
+    <div class="panel-body" id="b-indices">
+      {% for sym, name in symbols.indices %}
+      <div class="mkt-row" id="row-{{ sym | replace('^','X') | replace('=','EQ') | replace('.','DOT') }}">
+        <span class="mkt-name">{{ name }}</span>
+        <span class="mkt-price">–</span>
+        <span class="mkt-chg neu">–</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Commodities -->
+  <div class="panel" id="p-commodities">
+    <div class="panel-hdr">
+      <span class="panel-title">RÅVARER</span>
+      <span class="panel-sub">USD</span>
+    </div>
+    <div class="panel-body" id="b-commodities">
+      {% for sym, name in symbols.commodities %}
+      <div class="mkt-row" id="row-{{ sym | replace('^','X') | replace('=','EQ') | replace('.','DOT') }}">
+        <span class="mkt-name">{{ name }}</span>
+        <span class="mkt-price">–</span>
+        <span class="mkt-chg neu">–</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Forex -->
+  <div class="panel" id="p-forex">
+    <div class="panel-hdr">
+      <span class="panel-title">VALUTA</span>
+      <span class="panel-sub">FX</span>
+    </div>
+    <div class="panel-body" id="b-forex">
+      {% for sym, name in symbols.forex %}
+      <div class="mkt-row" id="row-{{ sym | replace('^','X') | replace('=','EQ') | replace('.','DOT') }}">
+        <span class="mkt-name">{{ name }}</span>
+        <span class="mkt-price">–</span>
+        <span class="mkt-chg neu">–</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Crypto -->
+  <div class="panel" id="p-crypto">
+    <div class="panel-hdr">
+      <span class="panel-title">KRYPTO</span>
+      <span class="panel-sub">24H</span>
+    </div>
+    <div class="panel-body" id="b-crypto">
+      {% for sym, name in symbols.crypto %}
+      <div class="mkt-row" id="row-{{ sym | replace('^','X') | replace('=','EQ') | replace('.','DOT') }}">
+        <span class="mkt-name">{{ name }}</span>
+        <span class="mkt-price">–</span>
+        <span class="mkt-chg neu">–</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Norwegian stocks -->
+  <div class="panel" id="p-no">
+    <div class="panel-hdr">
+      <span class="panel-title">OSLO BØRS</span>
+      <span class="panel-sub">NOK</span>
+    </div>
+    <div class="panel-body" id="b-no">
+      {% for sym, name in symbols.no_stocks %}
+      <div class="mkt-row" id="row-{{ sym | replace('^','X') | replace('=','EQ') | replace('.','DOT') }}">
+        <span class="mkt-name">{{ name }}</span>
+        <span class="mkt-price">–</span>
+        <span class="mkt-chg neu">–</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- News -->
+  <div class="panel" id="news-panel">
+    <div class="panel-hdr">
+      <span class="panel-title">NYHETER</span>
+      <span class="panel-sub">LIVE FEED</span>
+    </div>
+    <div class="panel-body" id="b-news">
+      <div class="news-item"><span class="news-title" style="color:var(--dim)">Laster nyheter …</span></div>
+    </div>
+  </div>
+
+  <!-- Global stocks row -->
+  <div class="panel" id="global-panel">
+    <div class="panel-hdr">
+      <span class="panel-title">GLOBALE AKSJER</span>
+      <span class="panel-sub">USD</span>
+    </div>
+    <div class="panel-body" id="b-global">
+      {% for sym, name in symbols.global_stocks %}
+      <div class="stock-card" id="card-{{ sym | replace('^','X') | replace('=','EQ') | replace('.','DOT') }}">
+        <div class="sc-name">{{ name }}</div>
+        <div class="sc-ticker">{{ sym }}</div>
+        <div class="sc-price">–</div>
+        <div class="sc-chg neu">–</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Bottom left: No stocks large view -->
+  <div class="panel" id="no-panel">
+    <div class="panel-hdr">
+      <span class="panel-title">NORSKE AKSJER — DETALJ</span>
+      <span class="panel-sub">OSLO BØRS</span>
+    </div>
+    <div class="panel-body" id="b-no2">
+      {% for sym, name in symbols.no_stocks %}
+      <div class="stock-card" id="card2-{{ sym | replace('^','X') | replace('=','EQ') | replace('.','DOT') }}">
+        <div class="sc-name">{{ name }}</div>
+        <div class="sc-ticker">{{ sym }}</div>
+        <div class="sc-price">–</div>
+        <div class="sc-chg neu">–</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Earnings calendar -->
+  <div class="panel" id="earnings-panel">
+    <div class="panel-hdr">
+      <span class="panel-title">RESULTATKALENDER</span>
+      <span class="panel-sub">KOMMENDE</span>
+    </div>
+    <div class="panel-body" id="b-earnings">
+      <div class="earn-row"><span class="earn-sym" style="color:var(--dim)">Laster …</span></div>
+    </div>
+  </div>
+
+  <!-- Geopolitical / Market alerts -->
+  <div class="panel" id="alerts-panel">
+    <div class="panel-hdr">
+      <span class="panel-title">VARSLER & HENDELSER</span>
+      <span class="panel-sub">LIVE</span>
+    </div>
+    <div class="panel-body" id="b-alerts">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- Exchange map -->
+<div id="map-section">
+  <div class="panel-hdr">
+    <span class="panel-title">GLOBALE BØRSER — LIVE STATUS</span>
+    <span class="panel-sub" id="map-open-count">BEREGNER …</span>
+  </div>
+  <div id="map-inner">
+    <div id="chartdiv"></div>
+    <div id="exchange-legend"></div>
+  </div>
+</div>
+
+<!-- Footer -->
+<div id="footer">
+  <span><span class="key">F1</span> HJELP &nbsp; <span class="key">F2</span> OPPDATER &nbsp; <span class="key">F5</span> FULL REFRESH</span>
+  <span id="footer-status">INITIALISERER …</span>
+  <span>BLOOMBERG TERMINAL &copy; 2025 — DATA: YAHOO FINANCE / REUTERS / CNBC</span>
+</div>
+
+<script>
+// ── Symbol maps from Jinja ─────────────────────────────────────────────────────
+const SYMBOLS = {
+  indices:       {{ symbols.indices | tojson }},
+  commodities:   {{ symbols.commodities | tojson }},
+  forex:         {{ symbols.forex | tojson }},
+  crypto:        {{ symbols.crypto | tojson }},
+  no_stocks:     {{ symbols.no_stocks | tojson }},
+  global_stocks: {{ symbols.global_stocks | tojson }},
+};
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
+function symId(sym) {
+  return sym.replace(/\^/g,'X').replace(/=/g,'EQ').replace(/\./g,'DOT');
+}
+
+function fmtPct(pct) {
+  const sign = pct >= 0 ? '+' : '';
+  return `${sign}${pct.toFixed(2)}%`;
+}
+
+function fmtChange(chg) {
+  const sign = chg >= 0 ? '+' : '';
+  return `${sign}${chg.toFixed(2)}`;
+}
+
+function cls(pct) {
+  if (pct > 0)  return 'pos';
+  if (pct < 0)  return 'neg';
+  return 'neu';
+}
+
+// ── Update mkt-row elements ────────────────────────────────────────────────────
+function updateRow(sym, data) {
+  const id  = `row-${symId(sym)}`;
+  const row = document.getElementById(id);
+  if (!row) return;
+
+  const cells = row.querySelectorAll('span');
+  if (cells.length < 3) return;
+
+  const prevPrice = cells[1].textContent;
+  const newPrice  = data.fmt;
+
+  cells[1].textContent = newPrice;
+  cells[2].textContent = `${fmtChange(data.change)} (${fmtPct(data.pct)})`;
+  cells[2].className   = `mkt-chg ${cls(data.pct)}`;
+
+  if (prevPrice !== '–' && prevPrice !== newPrice) {
+    row.classList.remove('flash-g','flash-r');
+    void row.offsetWidth;
+    row.classList.add(data.pct >= 0 ? 'flash-g' : 'flash-r');
+  }
+}
+
+// ── Update stock-card elements ─────────────────────────────────────────────────
+function updateCard(prefix, sym, data) {
+  const id   = `${prefix}-${symId(sym)}`;
+  const card = document.getElementById(id);
+  if (!card) return;
+
+  card.querySelector('.sc-price').textContent = data.fmt;
+  const chgEl = card.querySelector('.sc-chg');
+  chgEl.textContent = `${fmtChange(data.change)}  ${fmtPct(data.pct)}`;
+  chgEl.className = `sc-chg ${cls(data.pct)}`;
+}
+
+// ── Ticker tape ────────────────────────────────────────────────────────────────
+function buildTicker(market) {
+  const allPairs = [
+    ...SYMBOLS.indices, ...SYMBOLS.commodities,
+    ...SYMBOLS.forex,   ...SYMBOLS.crypto,
+    ...SYMBOLS.global_stocks, ...SYMBOLS.no_stocks,
+  ];
+
+  let html = '';
+  for (const [sym, name] of allPairs) {
+    const d = market[sym];
+    if (!d) continue;
+    const color = d.pct > 0 ? 'var(--green)' : d.pct < 0 ? 'var(--red)' : 'var(--dim)';
+    const arrow = d.pct > 0 ? '▲' : d.pct < 0 ? '▼' : '●';
+    const c     = cls(d.pct);
+    html += `<div class="tick-item">
+      <div class="tick-accent" style="background:${color}"></div>
+      <div class="tick-body">
+        <span class="tick-name">${name}</span>
+        <span class="tick-price">${d.fmt}</span>
+        <span class="tick-pct ${c}">${arrow} ${fmtPct(d.pct)}</span>
+      </div>
+    </div>`;
+  }
+  const ticker = document.getElementById('ticker');
+  ticker.innerHTML = html + html;  // duplicate for seamless loop
+}
+
+// ── Exchange map ────────────────────────────────────────────────────────────────
+const EXCHANGES = [
+  { name:'NYSE / NASDAQ',      city:'New York',    lat:40.71, lon:-74.01, tz:'America/New_York',    open:[9,30],  close:[16,0]  },
+  { name:'London (LSE)',       city:'London',      lat:51.51, lon:-0.13,  tz:'Europe/London',       open:[8,0],   close:[16,30] },
+  { name:'Frankfurt (XETRA)', city:'Frankfurt',   lat:50.11, lon:8.68,   tz:'Europe/Berlin',       open:[9,0],   close:[17,30] },
+  { name:'Oslo Børs',          city:'Oslo',        lat:59.91, lon:10.74,  tz:'Europe/Oslo',         open:[9,0],   close:[16,20] },
+  { name:'Paris (Euronext)',   city:'Paris',       lat:48.86, lon:2.35,   tz:'Europe/Paris',        open:[9,0],   close:[17,30] },
+  { name:'Amsterdam (AEX)',    city:'Amsterdam',   lat:52.37, lon:4.90,   tz:'Europe/Amsterdam',    open:[9,0],   close:[17,30] },
+  { name:'Zürich (SIX)',       city:'Zürich',      lat:47.37, lon:8.54,   tz:'Europe/Zurich',       open:[9,0],   close:[17,30] },
+  { name:'Stockholm (OMX)',    city:'Stockholm',   lat:59.33, lon:18.07,  tz:'Europe/Stockholm',    open:[9,0],   close:[17,30] },
+  { name:'Tokyo (TSE)',        city:'Tokyo',       lat:35.69, lon:139.69, tz:'Asia/Tokyo',          open:[9,0],   close:[15,30] },
+  { name:'Hong Kong (HKEX)',   city:'Hong Kong',   lat:22.32, lon:114.17, tz:'Asia/Hong_Kong',      open:[9,30],  close:[16,0]  },
+  { name:'Shanghai (SSE)',     city:'Shanghai',    lat:31.23, lon:121.47, tz:'Asia/Shanghai',       open:[9,30],  close:[15,0]  },
+  { name:'Seoul (KRX)',        city:'Seoul',       lat:37.57, lon:126.98, tz:'Asia/Seoul',          open:[9,0],   close:[15,30] },
+  { name:'Singapore (SGX)',    city:'Singapore',   lat:1.35,  lon:103.82, tz:'Asia/Singapore',      open:[9,0],   close:[17,0]  },
+  { name:'Mumbai (NSE/BSE)',   city:'Mumbai',      lat:19.08, lon:72.88,  tz:'Asia/Kolkata',        open:[9,15],  close:[15,30] },
+  { name:'Dubai (DFM)',        city:'Dubai',       lat:25.20, lon:55.27,  tz:'Asia/Dubai',          open:[10,0],  close:[14,0]  },
+  { name:'Sydney (ASX)',       city:'Sydney',      lat:-33.87,lon:151.21, tz:'Australia/Sydney',    open:[10,0],  close:[16,0]  },
+  { name:'Toronto (TSX)',      city:'Toronto',     lat:43.65, lon:-79.38, tz:'America/Toronto',     open:[9,30],  close:[16,0]  },
+  { name:'São Paulo (B3)',     city:'São Paulo',   lat:-23.55,lon:-46.63, tz:'America/Sao_Paulo',   open:[10,0],  close:[17,55] },
+];
+
+function exchStatus(exch) {
+  const now   = new Date();
+  const local = new Date(now.toLocaleString('en-US', { timeZone: exch.tz }));
+  const day   = local.getDay();
+  if (day === 0 || day === 6) return 'closed';
+  const min      = local.getHours() * 60 + local.getMinutes();
+  const openMin  = exch.open[0]  * 60 + exch.open[1];
+  const closeMin = exch.close[0] * 60 + exch.close[1];
+  if (min >= openMin && min < closeMin)        return 'open';
+  if (min >= openMin - 60 && min < openMin)    return 'pre';
+  return 'closed';
+}
+
+function localTimeStr(tz) {
+  return new Date().toLocaleTimeString('no-NO', { hour:'2-digit', minute:'2-digit', timeZone: tz });
+}
+
+let amChart = null;
+let pointSeries = null;
+
+function initMap() {
+  const root = am5.Root.new('chartdiv');
+  root.setThemes([am5themes_Dark.new(root)]);
+
+  const chart = root.container.children.push(
+    am5map.MapChart.new(root, {
+      panX: 'none', panY: 'none', wheelY: 'none',
+      projection: am5map.geoNaturalEarth1(),
+      paddingLeft: 0, paddingRight: 0, paddingTop: 0, paddingBottom: 0,
+    })
+  );
+
+  // Land
+  const polySeries = chart.series.push(
+    am5map.MapPolygonSeries.new(root, { geoJSON: am5geodata_worldLow })
+  );
+  polySeries.mapPolygons.template.setAll({
+    fill:         am5.color(0x0a150a),
+    stroke:       am5.color(0x1a2e1a),
+    strokeWidth:  0.5,
+    tooltipText:  '{name}',
+  });
+  polySeries.mapPolygons.template.states.create('hover', {
+    fill: am5.color(0x112211),
+  });
+
+  // Exchange point series
+  pointSeries = chart.series.push(
+    am5map.MapPointSeries.new(root, {})
+  );
+
+  pointSeries.bullets.push((root, series, dataItem) => {
+    const status = dataItem.dataContext.status;
+    const color  = status === 'open'   ? am5.color(0x00e676)
+                 : status === 'pre'    ? am5.color(0xffd600)
+                 :                       am5.color(0x2a2a2a);
+    const glowColor = status === 'open' ? am5.color(0x00e676)
+                    : status === 'pre'  ? am5.color(0xffd600)
+                    :                     am5.color(0x000000);
+
+    const circle = am5.Circle.new(root, {
+      radius:          status === 'open' ? 6 : 4,
+      fill:            color,
+      strokeWidth:     1,
+      stroke:          glowColor,
+      tooltipText:     '{name}\n{city}\n{statusLabel}\nLokal tid: {localTime}',
+      cursorOverStyle: 'pointer',
+    });
+
+    if (status === 'open') {
+      circle.animate({
+        key: 'radius', from: 6, to: 9,
+        duration: 1200, loops: Infinity,
+        easing: am5.ease.sinInOut,
+      });
+      circle.animate({
+        key: 'opacity', from: 1, to: 0.4,
+        duration: 1200, loops: Infinity,
+        easing: am5.ease.sinInOut,
+      });
+    }
+
+    return am5.Bullet.new(root, { sprite: circle });
+  });
+
+  amChart = { root, chart, pointSeries };
+  updateMapPoints();
+}
+
+function updateMapPoints() {
+  if (!pointSeries) return;
+  let openCount = 0;
+
+  const data = EXCHANGES.map(exch => {
+    const status = exchStatus(exch);
+    if (status === 'open') openCount++;
+    return {
+      geometry:    { type: 'Point', coordinates: [exch.lon, exch.lat] },
+      name:        exch.name,
+      city:        exch.city,
+      status,
+      statusLabel: status === 'open' ? '● ÅPEN' : status === 'pre' ? '◐ FØR-MARKED' : '○ STENGT',
+      localTime:   localTimeStr(exch.tz),
+    };
+  });
+
+  pointSeries.data.setAll(data);
+
+  document.getElementById('map-open-count').textContent =
+    `${openCount} AV ${EXCHANGES.length} BØRSER ÅPNE`;
+
+  renderExchangeLegend();
+}
+
+function renderExchangeLegend() {
+  const el = document.getElementById('exchange-legend');
+  el.innerHTML = EXCHANGES.map(exch => {
+    const status = exchStatus(exch);
+    const dotCls = status;
+    const stLabel = status === 'open' ? `<span class="exch-status-open">ÅPEN</span>`
+                  : status === 'pre'  ? `<span class="exch-status-pre">PRE</span>`
+                  :                     `<span class="exch-status-closed">STENGT</span>`;
+    const t = localTimeStr(exch.tz);
+    return `<div class="exch-row">
+      <div class="exch-dot ${dotCls}"></div>
+      <div>
+        <div class="exch-name">${exch.name}</div>
+        <div class="exch-time">${exch.city} · ${t}</div>
+      </div>
+      ${stLabel}
+    </div>`;
+  }).join('');
+}
+
+// ── News ───────────────────────────────────────────────────────────────────────
+function renderNews(news) {
+  const el = document.getElementById('b-news');
+  if (!news.length) {
+    el.innerHTML = '<div class="news-item"><span class="news-title" style="color:var(--dim)">Ingen nyheter tilgjengelig.</span></div>';
+    return;
+  }
+
+  el.innerHTML = news.map(n => {
+    const title = n.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const date  = n.published ? new Date(n.published) : null;
+    const timeStr = date && !isNaN(date)
+      ? date.toLocaleTimeString('no-NO', {hour:'2-digit', minute:'2-digit'})
+      : '';
+    return `<div class="news-item" onclick="window.open('${n.link}','_blank')">
+      <div class="news-source">${n.source}</div>
+      <div class="news-title">${title}</div>
+      ${timeStr ? `<div class="news-time">${timeStr}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+// ── Earnings calendar ──────────────────────────────────────────────────────────
+function renderEarnings(earnings) {
+  const el = document.getElementById('b-earnings');
+  if (!earnings.length) {
+    el.innerHTML = '<div class="earn-row"><span class="earn-sym" style="color:var(--dim)">Ingen data tilgjengelig.</span></div>';
+    return;
+  }
+
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  el.innerHTML = earnings.map(e => {
+    const d    = new Date(e.date);
+    const diff = Math.round((d - today) / 86400000);
+    let dayStr = diff === 0 ? '<span style="color:var(--green)">I DAG</span>'
+               : diff === 1 ? '<span style="color:var(--yellow)">I MORGEN</span>'
+               : diff > 0   ? `<span class="earn-days">om ${diff}d</span>`
+               : `<span style="color:var(--dim)">${Math.abs(diff)}d siden</span>`;
+    const dateFormatted = d.toLocaleDateString('no-NO',{day:'2-digit',month:'short'});
+    return `<div class="earn-row">
+      <span class="earn-sym">${e.symbol}</span>
+      <span class="earn-date">${dateFormatted}</span>
+      ${dayStr}
+    </div>`;
+  }).join('');
+}
+
+// ── Static alert cards ─────────────────────────────────────────────────────────
+const STATIC_ALERTS = [
+  { color:'yellow', cat:'GEOPOLITIKK', text:'Spenninger i Midtøsten påvirker oljeprisene (Brent >80).' },
+  { color:'blue',   cat:'SENTRALBANK', text:'Fed FOMC-møte: Neste rentevedtak 11. juni 2025.' },
+  { color:'blue',   cat:'SENTRALBANK', text:'Norges Bank: Rentebeslutning 19. juni 2025.' },
+  { color:'green',  cat:'MARKED',      text:'Oslo Børs åpner 09:00 / stenger 16:20 (CET).' },
+  { color:'green',  cat:'MARKED',      text:'NYSE åpner 15:30 / stenger 22:00 (CET).' },
+  { color:'yellow', cat:'MAKRO',       text:'US CPI-data publiseres neste uke. Forventet 3,1%.' },
+  { color:'red',    cat:'RISIKO',      text:'VIX over 20 — forhøyet markedsvolatilitet.' },
+];
+
+function renderAlerts() {
+  const el = document.getElementById('b-alerts');
+  el.innerHTML = STATIC_ALERTS.map(a => `
+    <div class="alert-item">
+      <div class="alert-dot ${a.color}"></div>
+      <div>
+        <div class="alert-cat">${a.cat}</div>
+        <div class="alert-text">${a.text}</div>
+      </div>
+    </div>`).join('');
+}
+
+// ── Clocks ─────────────────────────────────────────────────────────────────────
+const TZ_CONFIG = [
+  { id: 'oslo', tz: 'Europe/Oslo',      open: [9,0],  close: [16,20] },
+  { id: 'ny',   tz: 'America/New_York', open: [9,30], close: [16,0]  },
+  { id: 'lon',  tz: 'Europe/London',    open: [8,0],  close: [16,30] },
+  { id: 'tok',  tz: 'Asia/Tokyo',       open: [9,0],  close: [15,30] },
+  { id: 'hk',   tz: 'Asia/Hong_Kong',   open: [9,30], close: [16,0]  },
+];
+
+function isWeekday(d) { const day = d.getDay(); return day >= 1 && day <= 5; }
+
+function updateClocks() {
+  const now = new Date();
+  for (const cfg of TZ_CONFIG) {
+    const local = new Date(now.toLocaleString('en-US', {timeZone: cfg.tz}));
+    const h = local.getHours(), m = local.getMinutes(), s = local.getSeconds();
+    document.getElementById(`tz-${cfg.id}`).textContent =
+      `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+
+    const minNow = h*60 + m;
+    const openMin  = cfg.open[0]*60  + cfg.open[1];
+    const closeMin = cfg.close[0]*60 + cfg.close[1];
+    const open = isWeekday(local) && minNow >= openMin && minNow < closeMin;
+
+    const stEl = document.getElementById(`st-${cfg.id}`);
+    stEl.textContent  = open ? 'ÅPEN' : 'STENGT';
+    stEl.className    = `clock-status ${open ? 'status-open' : 'status-closed'}`;
+  }
+}
+
+// ── Main data fetch ────────────────────────────────────────────────────────────
+let countdown = 30;
+let countdownTimer;
+
+function startCountdown() {
+  clearInterval(countdownTimer);
+  countdown = 30;
+  countdownTimer = setInterval(() => {
+    countdown--;
+    document.getElementById('next-update').textContent = `${countdown}s`;
+    if (countdown <= 0) {
+      clearInterval(countdownTimer);
+      fetchData();
+    }
+  }, 1000);
+}
+
+async function fetchData() {
+  try {
+    document.getElementById('footer-status').textContent = 'HENTER DATA …';
+    const res  = await fetch('/api/all');
+    const data = await res.json();
+
+    const { market, news, earnings } = data;
+
+    // Update all market rows
+    for (const pairs of [
+      SYMBOLS.indices, SYMBOLS.commodities, SYMBOLS.forex,
+      SYMBOLS.crypto,  SYMBOLS.no_stocks,   SYMBOLS.global_stocks,
+    ]) {
+      for (const [sym] of pairs) {
+        if (market[sym]) updateRow(sym, market[sym]);
+      }
+    }
+
+    // Update stock cards
+    for (const [sym] of SYMBOLS.global_stocks) {
+      if (market[sym]) updateCard('card', sym, market[sym]);
+    }
+    for (const [sym] of SYMBOLS.no_stocks) {
+      if (market[sym]) updateCard('card2', sym, market[sym]);
+    }
+
+    buildTicker(market);
+    renderNews(news);
+    renderEarnings(earnings);
+
+    const now = new Date();
+    document.getElementById('update-time').textContent =
+      now.toLocaleTimeString('no-NO');
+    document.getElementById('footer-status').textContent =
+      `OK — ${Object.keys(market).length} symboler lastet`;
+
+    startCountdown();
+
+    // Hide loading overlay after first successful load
+    const overlay = document.getElementById('loading');
+    if (overlay) overlay.style.display = 'none';
+
+  } catch (err) {
+    console.error('Fetch error:', err);
+    document.getElementById('footer-status').textContent = 'FEIL — PRØVER IGJEN …';
+    setTimeout(fetchData, 10000);
+  }
+}
+
+// ── Keyboard shortcuts ─────────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key === 'F2') { e.preventDefault(); fetchData(); }
+  if (e.key === 'F5') { e.preventDefault(); location.reload(); }
+});
+
+// ── Boot ───────────────────────────────────────────────────────────────────────
+renderAlerts();
+setInterval(updateClocks, 1000);
+updateClocks();
+fetchData();
+
+// Map: init after amCharts scripts are ready, refresh exchange status every minute
+if (typeof am5 !== 'undefined') {
+  am5.ready(initMap);
+  setInterval(updateMapPoints, 60_000);
+} else {
+  window.addEventListener('load', () => { am5.ready(initMap); setInterval(updateMapPoints, 60_000); });
+}
+</script>
+</body>
+</html>
