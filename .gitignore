@@ -1,0 +1,6 @@
+server.log
+__pycache__/
+*.pyc
+.venv/
+.vercel/
+.DS_Store
