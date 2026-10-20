@@ -308,11 +308,49 @@ def _download_prices(syms):
                 'change': last - prev,
                 'pct':    (last - prev) / prev * 100 if prev else 0.0,
                 'date':   str(p.index[-1])[:10],
+                'prev_date': str(p.index[-2])[:10],
                 'spark':  [round(float(x), 6) for x in p.iloc[-22:]],
             }
     except Exception as e:
         print(f'[prices] {syms[:3]}…: {e}')
     return out
+
+
+def _skipped_weekdays(q):
+    start = date.fromisoformat(q['prev_date']) + timedelta(days=1)
+    end = date.fromisoformat(q['date']) - timedelta(days=1)
+    return start <= end and len(pd.bdate_range(start, end)) > 0
+
+
+def _fill_session_gaps(result):
+    # Yahoo's daily history sometimes drops a whole session (all of Oslo Børs on
+    # 2026-10-19), so "prev" would be two sessions back. Hourly data still has
+    # the missing day; use its last close as the previous close.
+    suspects = [s for s, q in result.items() if _skipped_weekdays(q)]
+    groups = defaultdict(list)
+    for s in suspects:
+        groups[s.rsplit('.', 1)[1] if '.' in s else ''].append(s)
+    for syms in groups.values():
+        try:
+            close = _close_frame(yf_download(syms, period='5d', interval='1h'), syms)
+        except Exception as e:
+            print(f'[gaps] {syms[:3]}…: {e}')
+            continue
+        for s in syms:
+            if s not in close.columns:
+                continue
+            q = result[s]
+            p = close[s].dropna()
+            by_day = p.groupby(p.index.date).last()
+            lo, hi = date.fromisoformat(q['prev_date']), date.fromisoformat(q['date'])
+            between = [d for d in by_day.index if lo < d < hi]
+            if not between:
+                continue
+            prev = float(by_day[between[-1]])
+            q.update(prev_date=str(between[-1]), change=q['price'] - prev,
+                     pct=(q['price'] - prev) / prev * 100 if prev else 0.0)
+    if suspects:
+        print(f'[gaps] sjekket {len(suspects)} symboler med manglende handelsdag')
 
 
 def fetch_prices(syms, chunk=20):
@@ -322,6 +360,7 @@ def fetch_prices(syms, chunk=20):
     missing = [s for s in syms if s not in result]
     for s in missing:
         result.update(_download_prices([s]))
+    _fill_session_gaps(result)
     return result
 
 # ── Fetchers ───────────────────────────────────────────────────────────────────
