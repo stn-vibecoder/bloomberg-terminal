@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NYLUND TERMINAL</title>
+<title>FINANSTERMINAL</title>
 <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
 <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32.png') }}">
 <link rel="apple-touch-icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
@@ -39,7 +39,7 @@
   /* ── Header ─────────────────────────────────────────── */
   #header { display: flex; align-items: center; gap: 16px; padding: 7px 12px; background: var(--bg2); border-bottom: 2px solid var(--orange); flex-wrap: wrap; position: sticky; top: env(safe-area-inset-top, 0px); z-index: 50; }
   #logo { font-size: 17px; font-weight: 700; color: var(--orange); letter-spacing: 3px; white-space: nowrap; text-shadow: 0 0 18px rgba(255,98,0,.55); }
-  #logo span { color: var(--text); font-weight: 400; }
+  #logo i { color: var(--text); font-weight: 400; font-style: normal; }
   #logo { display: flex; align-items: center; gap: 9px; }
   #logo img { display: block; filter: drop-shadow(0 0 6px rgba(255,98,0,.45)); }
   #search-wrap { position: relative; flex: 1 1 320px; max-width: 560px; }
@@ -255,7 +255,7 @@
 <body>
 
 <header id="header">
-  <div id="logo"><img src="{{ url_for('static', filename='favicon.svg') }}" alt="" width="24" height="24">NYLUND<span> TERMINAL</span></div>
+  <div id="logo"><img src="{{ url_for('static', filename='favicon.svg') }}" alt="" width="24" height="24"><span>FINANS<i>TERMINAL</i></span></div>
   <div id="search-wrap">
     <input id="search" type="text" autocomplete="off" spellcheck="false" placeholder="Søk etter aksje, fond, indeks, valuta eller krypto …" aria-label="Søk">
     <span id="search-hint">/</span>
@@ -409,7 +409,7 @@
 <footer id="footer">
   <span><b>/</b> SØK &nbsp; <b>ESC</b> LUKK &nbsp; <b>R</b> OPPDATER</span>
   <span>Kurser fra Yahoo Finance kan være forsinket opptil 15–20 min. Ikke investeringsråd.</span>
-  <span>NYLUND TERMINAL © <span id="year"></span> · Nyheter: CNBC · Bloomberg · FT · MarketWatch · Investing.com · E24</span>
+  <span>FINANSTERMINAL.NO © <span id="year"></span> · Nyheter: CNBC · Bloomberg · FT · MarketWatch · Investing.com · E24</span>
 </footer>
 
 <script>

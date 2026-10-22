@@ -462,7 +462,7 @@ def _parse_entry_time(entry):
 def _fetch_feed(feed):
     url, source, needs_filter = feed
     try:
-        r = requests.get(url, timeout=8, headers={'User-Agent': 'Mozilla/5.0 NylundTerminal'})
+        r = requests.get(url, timeout=8, headers={'User-Agent': 'Mozilla/5.0 Finansterminal'})
         parsed = feedparser.parse(r.content)
     except Exception as e:
         print(f'[news] {source}: {e}')
@@ -731,7 +731,7 @@ def _preload():
                          ('earnings', fetch_earnings, 6 * 3600), ('insider', fetch_insider, 3 * 3600),
                          ('correlation', fetch_correlation, 6 * 3600)]:
         cache.get(key, fn, ttl)
-    print('[nylund] Klar.')
+    print('[finansterminal] Klar.')
 
 
 threading.Thread(target=_preload, daemon=True).start()
