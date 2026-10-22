@@ -2,7 +2,11 @@
 <html lang="no">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Finansterminal">
 <title>FINANSTERMINAL</title>
 <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
 <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32.png') }}">
@@ -101,11 +105,6 @@
     #heat-panel { grid-column: 1 / -1; grid-row: 1; }
     #g-analysis, #g-bottom { grid-template-columns: minmax(0, 1fr); }
     #g-macro > :last-child { grid-column: 1 / -1; }
-  }
-  @media (max-width: 640px) {
-    #g-top, #g-mid, #g-macro { grid-template-columns: minmax(0, 1fr); }
-    #status { margin-left: 0; text-align: left; }
-    #clocks .clock:nth-child(n+3) { display: none; }
   }
 
   .panel { background: var(--bg2); display: flex; flex-direction: column; min-width: 0; }
@@ -250,6 +249,87 @@
 
   #footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 16px; padding: 6px 12px calc(6px + env(safe-area-inset-bottom, 0px)); background: var(--hdr); border-top: 1px solid var(--orange); font-size: 9px; color: var(--dim); }
   #footer b { color: var(--orange); font-weight: 600; }
+
+  /* ── Mobile (≤640px): app-style tabs; desktop/tablet are untouched ── */
+  #mnav { display: none; }
+  @media (max-width: 640px) {
+    body { font-size: 12px; padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px)); -webkit-tap-highlight-color: transparent; }
+    body:not([data-mtab="marked"]) [data-m="marked"],
+    body:not([data-mtab="aksjer"]) [data-m="aksjer"],
+    body:not([data-mtab="nyheter"]) [data-m="nyheter"],
+    body:not([data-mtab="analyse"]) [data-m="analyse"],
+    body:not([data-mtab="mer"]) [data-m="mer"] { display: none !important; }
+
+    #mnav { display: grid; grid-template-columns: repeat(5, 1fr); position: fixed; left: 0; right: 0; bottom: 0; z-index: 70;
+            background: #050505; border-top: 1px solid var(--orange); padding: 0 env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px); }
+    #mnav button { background: none; border: 0; color: var(--dim); padding: 8px 0 7px; display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 9px; font-weight: 600; letter-spacing: 1px; cursor: pointer; }
+    #mnav button svg { width: 20px; height: 20px; }
+    #mnav button.on { color: var(--orange); }
+
+    #header { padding: 8px 10px; gap: 8px; }
+    #logo { font-size: 15px; letter-spacing: 2px; order: 1; }
+    #status { order: 2; margin-left: auto; }
+    #search-wrap { order: 3; flex: 1 1 100%; max-width: none; }
+    #search { font-size: 16px; padding: 8px 10px 8px 32px; }
+    #search-hint, #clocks { display: none; }
+    #search-results { max-height: 60vh; }
+    .sr-row { padding: 10px 12px; }
+
+    .grid { margin: 0; border-left: 0; border-right: 0; }
+    #g-top, #g-mid, #g-macro, #g-analysis, #g-bottom { grid-template-columns: minmax(0, 1fr); }
+    #heat-panel { grid-row: auto; }
+    .ph { padding: 7px 10px; min-height: 32px; flex-wrap: wrap; }
+    .pt { font-size: 10px; }
+    .ps { font-size: 9px; }
+    .tab { padding: 4px 9px; font-size: 9px; }
+    .pb { overflow: visible; }
+
+    .q { grid-template-columns: minmax(0, 1fr) 56px 88px 66px; grid-template-rows: auto; align-items: center; padding: 9px 12px; }
+    .q-n { font-size: 11px; order: 1; }
+    .q-s { order: 2; }
+    .q-p { order: 3; font-size: 13px; }
+    .q-c { order: 4; font-size: 11px; }
+    .q-extra { display: none; }
+    .spark { width: 52px; height: 16px; }
+    .q:active, .mv:active, .sec:active, .t tbody tr:active, .news:active { background: var(--hover); }
+
+    #news-panel { max-height: none; }
+    #news-src { flex-wrap: nowrap; overflow-x: auto; padding: 6px 8px; scrollbar-width: none; }
+    #news-src::-webkit-scrollbar { display: none; }
+    .news { padding: 10px 12px; }
+    .news-m { font-size: 9px; }
+    .news-t { font-size: 13px; line-height: 1.45; }
+
+    #monitor-panel .tbl-wrap { max-height: none; }
+    #monitor-tools { flex: 1 1 100%; }
+    #monitor-filter { flex: 1; width: auto; font-size: 16px; padding: 4px 8px; }
+    #monitor-sub { display: none; }
+    #monitor th:nth-child(n+5):not(:last-child), #monitor td:nth-child(n+5):not(:last-child) { display: none; }
+    #monitor td { padding: 9px 8px; font-size: 12px; }
+    #monitor td:nth-child(2) { max-width: 120px !important; }
+    .ib { padding: 2px 8px; font-size: 12px; line-height: 18px; }
+
+    .sec { padding: 9px 12px; grid-template-columns: minmax(90px, 1fr) 60px 1.5fr; }
+    .sec-n { font-size: 11px; }
+    .mv { padding: 9px 12px; }
+    .heat-tiles { grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); }
+
+    #an-head { padding: 10px 12px 4px; }
+    #an-tools { gap: 6px; }
+    #an-tools .sep { display: none; }
+    #periods, #quick { display: flex; gap: 4px; width: 100%; overflow-x: auto; scrollbar-width: none; }
+    #periods::-webkit-scrollbar, #quick::-webkit-scrollbar { display: none; }
+    .btn { padding: 6px 10px; flex-shrink: 0; }
+    #chart-price { height: 280px; margin: 0; }
+    #chart-rsi { height: 90px; margin: 0 0 6px; }
+    #info-desc { max-height: none; }
+
+    #p-cal { max-height: none !important; }
+    .cal { padding: 9px 12px; }
+    .cal-e { font-size: 11px; }
+    #g-bottom .tbl-wrap { max-height: 420px; }
+    #footer > span:first-child { display: none; }
+  }
 </style>
 </head>
 <body>
@@ -266,22 +346,22 @@
 </header>
 
 <div id="ticker-wrap"><div id="ticker"></div></div>
-<div id="signals"><span class="sig"><b>LASTER SIGNALER …</b></span></div>
+<div id="signals" data-m="marked"><span class="sig"><b>LASTER SIGNALER …</b></span></div>
 
 <!-- Markets + news + stock monitor -->
 <section class="grid" id="g-top">
-  <div class="panel"><div class="ph"><span class="pt">Indekser</span><span class="ps">GLOBALT</span></div><div class="pb" id="p-indices"><div class="loading">Laster …</div></div></div>
-  <div class="panel"><div class="ph"><span class="pt">Råvarer</span><span class="ps">USD</span></div><div class="pb" id="p-commodities"><div class="loading">Laster …</div></div></div>
-  <div class="panel"><div class="ph"><span class="pt">Valuta</span><span class="ps">FX</span></div><div class="pb" id="p-forex"><div class="loading">Laster …</div></div></div>
-  <div class="panel"><div class="ph"><span class="pt">Krypto</span><span class="ps">USD · 24/7</span></div><div class="pb" id="p-crypto"><div class="loading">Laster …</div></div></div>
+  <div class="panel" data-m="marked"><div class="ph"><span class="pt">Indekser</span><span class="ps">GLOBALT</span></div><div class="pb" id="p-indices"><div class="loading">Laster …</div></div></div>
+  <div class="panel" data-m="marked"><div class="ph"><span class="pt">Råvarer</span><span class="ps">USD</span></div><div class="pb" id="p-commodities"><div class="loading">Laster …</div></div></div>
+  <div class="panel" data-m="marked"><div class="ph"><span class="pt">Valuta</span><span class="ps">FX</span></div><div class="pb" id="p-forex"><div class="loading">Laster …</div></div></div>
+  <div class="panel" data-m="marked"><div class="ph"><span class="pt">Krypto</span><span class="ps">USD · 24/7</span></div><div class="pb" id="p-crypto"><div class="loading">Laster …</div></div></div>
 
-  <div class="panel" id="news-panel">
+  <div class="panel" id="news-panel" data-m="nyheter">
     <div class="ph"><span class="pt">Nyheter</span><span class="ps" id="news-sub">SISTE 36 TIMER</span></div>
     <div id="news-src"></div>
     <div class="pb" id="p-news"><div class="loading">Laster nyheter …</div></div>
   </div>
 
-  <div class="panel" id="monitor-panel">
+  <div class="panel" id="monitor-panel" data-m="aksjer">
     <div class="ph">
       <div class="tabs" id="monitor-tabs">
         <button class="tab on" data-tab="oslo">OSLO BØRS</button>
@@ -319,13 +399,13 @@
 
 <!-- Sectors / heatmap / movers -->
 <section class="grid" id="g-mid">
-  <div class="panel"><div class="ph"><span class="pt">S&amp;P 500 sektorer</span><span class="ps">SPDR-ETF · I DAG</span></div><div class="pb" id="p-sectors"><div class="loading">Laster …</div></div></div>
-  <div class="panel" id="heat-panel"><div class="ph"><span class="pt">Varmekart</span><span class="ps">DAGLIG ENDRING · KLIKK FOR ANALYSE</span></div><div class="pb" id="heat"><div class="loading">Laster …</div></div></div>
-  <div class="panel"><div class="ph"><span class="pt">Vinnere &amp; tapere</span><span class="ps">OSLO + USA</span></div><div class="pb" id="p-movers"><div class="loading">Laster …</div></div></div>
+  <div class="panel" data-m="marked"><div class="ph"><span class="pt">S&amp;P 500 sektorer</span><span class="ps">SPDR-ETF · I DAG</span></div><div class="pb" id="p-sectors"><div class="loading">Laster …</div></div></div>
+  <div class="panel" id="heat-panel" data-m="aksjer"><div class="ph"><span class="pt">Varmekart</span><span class="ps">DAGLIG ENDRING · KLIKK FOR ANALYSE</span></div><div class="pb" id="heat"><div class="loading">Laster …</div></div></div>
+  <div class="panel" data-m="aksjer"><div class="ph"><span class="pt">Vinnere &amp; tapere</span><span class="ps">OSLO + USA</span></div><div class="pb" id="p-movers"><div class="loading">Laster …</div></div></div>
 </section>
 
 <!-- Analysis -->
-<section class="grid" id="g-analysis">
+<section class="grid" id="g-analysis" data-m="analyse">
   <div class="panel" id="analysis">
     <div class="ph"><span class="pt">Teknisk analyse</span><span class="ps">CANDLESTICK · VOLUM · GLIDENDE SNITT · RSI(14)</span></div>
     <div id="an-head">
@@ -352,7 +432,7 @@
 </section>
 
 <!-- Rates / calendar / risk -->
-<section class="grid" id="g-macro">
+<section class="grid" id="g-macro" data-m="mer">
   <div class="panel">
     <div class="ph"><span class="pt">Rentekurve</span><span class="ps">US TREASURIES · I DAG VS 1 MND</span></div>
     <div class="pb">
@@ -384,7 +464,7 @@
 </section>
 
 <!-- Insider / correlation -->
-<section class="grid" id="g-bottom">
+<section class="grid" id="g-bottom" data-m="mer">
   <div class="panel">
     <div class="ph"><span class="pt">Innsidehandel</span><span class="ps">USA MEGACAP · SEC FORM 4</span></div>
     <div class="tbl-wrap"><table class="t">
@@ -399,12 +479,20 @@
 </section>
 
 <!-- Exchange map -->
-<section class="grid">
+<section class="grid" data-m="mer">
   <div class="panel">
     <div class="ph"><span class="pt">Børser – åpningstider</span><span class="ps" id="map-sub">–</span></div>
     <div id="map-inner"><div id="chartdiv"></div><div id="exch-list"></div></div>
   </div>
 </section>
+
+<nav id="mnav" aria-label="Seksjoner">
+  <button data-mtab="marked"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-5 4 3 8-8"/><path d="M15 7h5v5"/></svg>MARKED</button>
+  <button data-mtab="aksjer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="4" width="18" height="16" rx="1.5"/><path d="M3 9.5h18M3 14.5h18M9 4v16"/></svg>AKSJER</button>
+  <button data-mtab="nyheter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>NYHETER</button>
+  <button data-mtab="analyse"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M7 3v18M17 3v18"/><rect x="5" y="7" width="4" height="8" fill="currentColor"/><rect x="15" y="9" width="4" height="7"/></svg>ANALYSE</button>
+  <button data-mtab="mer"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg>MER</button>
+</nav>
 
 <footer id="footer">
   <span><b>/</b> SØK &nbsp; <b>ESC</b> LUKK &nbsp; <b>R</b> OPPDATER</span>
@@ -950,8 +1038,24 @@ function analyze(sym, name, scroll) {
   loadChart();
   loadInfo();
   document.querySelectorAll('#monitor tr[data-sym]').forEach(tr => tr.classList.toggle('sel', tr.dataset.sym === sym));
-  if (scroll) $('g-analysis').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (scroll) {
+    if (MOBILE.matches) setMTab('analyse');
+    else $('g-analysis').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
   try { localStorage.setItem('nt_sel', sym); } catch {}
+}
+
+// ── Mobile tabs ────────────────────────────────────────
+const MOBILE = matchMedia('(max-width: 640px)');
+const MTABS = ['marked', 'aksjer', 'nyheter', 'analyse', 'mer'];
+function setMTab(t, toTop = true) {
+  if (!MTABS.includes(t)) t = 'marked';
+  document.body.dataset.mtab = t;
+  document.querySelectorAll('#mnav [data-mtab]').forEach(b => b.classList.toggle('on', b.dataset.mtab === t));
+  try { localStorage.setItem('nt_mtab', t); } catch {}
+  if (toTop && MOBILE.matches) window.scrollTo(0, 0);
+  // Charts created while hidden have zero width; refit once visible.
+  if (t === 'analyse' && LW) requestAnimationFrame(() => { LW.pc.timeScale().fitContent(); LW.rc.timeScale().fitContent(); });
 }
 
 // ── Search ─────────────────────────────────────────────
@@ -1035,6 +1139,8 @@ document.addEventListener('click', e => {
   if (p) { S.period = p.dataset.p; loadChart(); return; }
   const ma = e.target.closest('[data-ma]');
   if (ma) { S.ma[ma.dataset.ma] = !S.ma[ma.dataset.ma]; applyMA(); return; }
+  const mt = e.target.closest('#mnav [data-mtab]');
+  if (mt) { setMTab(mt.dataset.mtab); return; }
   const sym = e.target.closest('[data-sym]');
   if (sym && !e.target.closest('a')) analyze(sym.dataset.sym, null, !e.target.closest('#analysis'));
 });
@@ -1114,6 +1220,9 @@ $('year').textContent = new Date().getFullYear();
 $('periods').innerHTML = PERIODS.map(([p, l]) => `<button class="btn" data-p="${p}">${l}</button>`).join(' ');
 $('quick').innerHTML = QUICK.map(s => `<button class="btn" data-sym="${esc(s)}">${esc((NAMES[s] || s).replace(' (OSEBX)', '').replace('Oslo Børs', 'OSEBX'))}</button>`).join(' ');
 renderWatchCount();
+let savedMTab = null;
+try { savedMTab = localStorage.getItem('nt_mtab'); } catch {}
+setMTab(savedMTab || 'marked', false);
 renderClocks();
 setInterval(renderClocks, 1000);
 setInterval(() => { countdown--; $('nxt').textContent = Math.max(0, countdown) + ' s'; if (countdown <= 0) refreshMarket(); }, 1000);
